@@ -1,0 +1,14 @@
+# list of folders with plots to be included into dataset
+plot_folders: [/user/jhenric/tree_learning_data/raw_data/val_data/L1W/final/random_0.25_train]
+test_folders: [/user/jhenric/tree_learning_data/raw_data/val_data/L1W/final/random_0.5_val]
+
+# choose what data to provide
+target_type: "offset"
+seed: 0
+
+# normalization parameters
+normalization: True
+normalization_pars: [15, 15, 25]
+validate_samples: False
+
+NAME: Transfer_Treeset

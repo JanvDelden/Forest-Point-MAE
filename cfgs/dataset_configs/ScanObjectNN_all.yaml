@@ -1,0 +1,3 @@
+NAME: ScanObjectNN_all
+plot_folders: ["data/scanobjectnn/repackaged/train"]
+test_folders: ["data/scanobjectnn/repackaged/test"]

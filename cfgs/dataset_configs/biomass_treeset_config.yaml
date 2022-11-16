@@ -1,0 +1,18 @@
+# list of folders with plots to be included into dataset
+plot_folders: ["data/trees/biomass-trees"]
+
+# choose what data to provide
+target_type: "biomass"
+seed: 0
+train_ratio: 0.75
+
+
+# normalization parameters
+normalization: True
+normalization_pars: [10, 10, 22.5]
+validate_samples: True
+
+# data augmentations
+transformations: []
+
+NAME: Cls_Treeset

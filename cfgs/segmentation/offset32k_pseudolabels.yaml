@@ -1,0 +1,43 @@
+optimizer : {
+  type: AdamW,
+  kwargs: {
+  lr : 0.0005,
+  weight_decay : 0.05,
+  betas: [0.9, 0.95]
+}}
+
+scheduler: {
+  type: CosLR,
+  initial_epochs_ratio: 0.033,
+  kwargs: {epochs: will_be_calculated}
+}
+
+dataset : {
+  train : { _base_: cfgs/dataset_configs/offset_pseudolabels.yaml,
+            others: {subset: 'train', npoints: 32768}},
+  val : { _base_: cfgs/dataset_configs/offset_pseudolabels.yaml,
+            others: {subset: 'test', npoints: 32768}},
+  test : { _base_: cfgs/dataset_configs/offset_pseudolabels.yaml,
+            others: {subset: 'test', npoints: 32768}}}
+
+model : {
+  NAME: PointTransformer,
+  trans_dim: 384,
+  depth: 12,
+  drop_path_rate: 0.1,
+  cls_dim: 3,
+  num_heads: 6,
+  group_size: 128,
+  num_group: 512,
+  encoder_dims: 384,
+  use_feature_prop: True,
+  use_token_features: False,
+  use_global_features: True
+}
+
+
+total_bs : 12
+fast_filter: True
+slow_filter: False
+max_step : 1000000 
+grad_norm_clip : 10

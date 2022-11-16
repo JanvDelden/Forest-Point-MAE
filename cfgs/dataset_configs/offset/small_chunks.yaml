@@ -1,0 +1,16 @@
+# list of folders with plots to be included into dataset
+#plot_folders: [data/chunks/A1N.npy, data/chunks/A1W.npy]
+#test_folders: [data/chunks/G1N.npy]
+plot_folders: ["data/chunks/jan_train05.npy","data/chunks/15samplesjan_train05.npy"]
+
+test_folders: ["data/chunks/jan_val05.npy"]
+# choose what data to provide
+target_type: "offset"
+seed: 0
+
+# normalization parameters
+normalization: True
+normalization_pars: [10, 10, 22.5]
+validate_samples: False
+
+NAME: Transfer_Treeset

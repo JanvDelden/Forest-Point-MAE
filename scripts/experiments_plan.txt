@@ -1,0 +1,67 @@
+Shapenet Pretrainings:
+experiments/pretraining/pretrain_official/pretrain.pth
+experiments/pretraining/pretrain64/encoderresize/ckpt-best.pth 2.7623
+experiments/pretraining/pretrain128/encoderresize/ckpt-best.pth 2.9855
+
+Trainings:
+CUDA_VISIBLE_DEVICES=6 python main.py --config cfgs/pretraining/treeset.yaml --start_ckpts None\
+ --exp_name debug --sampling_method slice_fps
+experiments/pretraining/treeset/denoised/ckpt-best.pth 1.3696
+experiments/pretraining/16kpoints/denoised/ckpt-best.pth 0.9103
+experiments/pretraining/32kpoints/denoised/ckpt-best.pth 0.7635
+experiments/pretraining/treeset/only_forest/ckpt-best.pth 1.7389
+experiments/pretraining/treeset/masking_strategy_point/ckpt-best.pth 1.6967
+
+
+#further trainings:
+experiments/pretraining/32kpoints/32kpretrained/ckpt-best.pth 0.7575
+experiments/pretraining/32kpoints/32kpretrainednoslice/ckpt-best.pth  0.8002
+experiments/pretraining/32kpoints/32kscratch/ckpt-best.pth 0.8183
+experiments/pretraining/treeset/no_pretraining/ckpt-best.pth 1.5442
+experiments/pretraining/32kpoints/scratch_encoder_groupsize/ckpt-best.pth 0.9331
+experiments/pretraining/treeset/sliceplateau/ckpt-best.pth  1.4317 (1.5368 for only fps but needs more training)
+experiments/pretraining/8kcontinue/sliceplateau_continuenew/ckpt-best.pth 1.3848
+experiments/pretraining/treeset/scratchtrain/ckpt-best.pth  1.6031
+Overfitting: lowest loss 0.146 with bs 32 and one sample and resampled masking 
+Vis:
+CUDA_VISIBLE_DEVICES=6 python main_vis.py --config cfgs/pretraining/treeset.yaml --ckpts None --exp_name debug --sampling_method slice_fps --test
+
+
+###EVALUATION ####
+# Fewshot
+CUDA_VISIBLE_DEVICES=5 python main.py --finetune_model  --config cfgs/classification/cls_treeset_fewshot.yaml \
+        --ckpts experiments/treeset/cfgs/scratchtrain/ckpt-best.pth --exp_name debug \
+        --fewshot --sampling_method slice_fps --freeze_encoder
+# classification
+97.6331 %  on scratchtrain with different group size 128 than in inital model 32
+CUDA_VISIBLE_DEVICES=5 python main.py --finetune_model  --config cfgs/cls_treeset_fewshot.yaml \
+        --ckpts experiments/treeset/cfgs/scratchtrain/ckpt-best.pth --exp_name debug \
+        --fewshot --sampling_method slice_fps --freeze_encoder
+# biomass prediction
+scratchtrain 0.1744  sliceplateau 0.1197 vs 0.2419
+CUDA_VISIBLE_DEVICES=6 python main.py --finetune_model --regression --config cfgs/segmentation/segmentation.yaml\
+         --ckpts experiments/treeset/cfgs/scratchtrain/ckpt-best.pth --exp_name debug
+# segmentation oss = 0.0946 acc = 0.9766 pre = 0.9083 rec = 0.9294 f1 = 0.9309 => only local information are relevant
+CUDA_VISIBLE_DEVICES=7 python main.py --segmentation --config cfgs/segmentation/segmentation.yaml\
+                --ckpts experiments/pretraining/treeset/sliceplateau/ckpttmu-best.pth --exp_name debug
+CUDA_VISIBLE_DEVICES=1 python main_vis.py --config cfgs/segmentation/segmentation.yaml --ckpts\
+ experiments/segmentation/segmentation/sampling/randkmeanss/ckpt-best.pth --exp_name debug --sampling_method kmeans --test
+#offset
+CUDA_VISIBLE_DEVICES=1 python main.py --segmentation --config cfgs/segmentation/offset.yaml\
+                --ckpts experiments/pretraining/treeset/denoised/ckpt-best.pth --exp_name feature_prop
+CUDA_VISIBLE_DEVICES=6 python main_vis.py --config cfgs/segmentation/offset.yaml --ckpts\
+ experiments/segmentation/offset/denoised/ckpt-best.pth --exp_name debug --sampling_method slice_fps --test
+
+CUDA_VISIBLE_DEVICES=6 python main_vis.py --config cfgs/pretraining/treeset.yaml --ckpts None --exp_name debug --sampling_method kmeans --test
+
+
+CUDA_VISIBLE_DEVICES=5 python main_vis.py --config cfgs/segmentation/offset32k.yaml --ckpts experiments/segmentation/offset32k/largedata/more_augmentations_kmeans/ckpt-best.pth \
+      --exp_name debug --sampling_method kmeans --test --task offset
+
+
+CUDA_VISIBLE_DEVICES=7 python main.py --config cfgs/classification/modelnetfewshot.yaml --finetune_model \
+--ckpts experiments/pretraining/pretrain_official/pretrain.pth --exp_name modelnet \
+ --modelnet_way 5 --shot 10 --nruns 10 --sampling_method kmeans
+
+ CUDA_VISIBLE_DEVICES=2 python main.py --config cfgs/pretraining/curriculum.yaml --start_ckpts experiments/pretraining/pretrain_official/pretrain.pth \
+ --exp_name debug --sampling_method kmeans_jitter

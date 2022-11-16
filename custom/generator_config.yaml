@@ -1,0 +1,22 @@
+plot_path: "data/forest/original/L1W.npy"
+occupancy_path: "data/forest/occupancy/L1W.npy"
+
+# Preprocessing
+voxelize: False
+voxel_size: 0.10
+remove_background: True
+occupancy_resolution: 1
+number_occupancy_points: 100000
+fill_holes_how_far: 9
+
+# Sample characteristics
+edge_length: 15
+min_occupied: 0.80
+
+# Data saving
+sample_path: "data/chunks/L1W.npy"
+save_config: True
+normalize: True
+save_labels: True
+
+filter: True

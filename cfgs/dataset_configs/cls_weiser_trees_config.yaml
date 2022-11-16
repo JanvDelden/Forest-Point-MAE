@@ -1,0 +1,16 @@
+# list of folders with plots to be included into dataset
+plot_folders: ["data/trees/weiser_trees/npy"]
+
+# choose what data to provide
+target_type: "label"
+seed: 0
+train_ratio: 0.50
+
+
+# normalization parameters
+normalization: True
+normalization_pars: [10, 10, 22.5]
+validate_samples: True
+
+
+NAME: Cls_Treeset

@@ -1,0 +1,45 @@
+optimizer : {
+  type: AdamW,
+  kwargs: {
+  lr : 0.0005,
+  weight_decay : 0.05,
+  betas: [0.9, 0.95]
+}}
+
+scheduler: {
+  type: CosLR,
+  kwargs: {
+    epochs: 400,
+    initial_epochs : 15
+}}
+
+dataset : {
+  train : { _base_: cfgs/dataset_configs/offset/small_chunks.yaml,
+            others: {subset: 'train', npoints: 8192}},
+  val : { _base_: cfgs/dataset_configs/offset/small_chunks.yaml,
+            others: {subset: 'test', npoints: 8192}},
+  test : { _base_: cfgs/dataset_configs/offset/small_chunks.yaml,
+            others: {subset: 'test', npoints: 8192}}}
+
+model : {
+  NAME: PointTransformer,
+  trans_dim: 384,
+  depth: 12,
+  drop_path_rate: 0.1,
+  cls_dim: 3,
+  num_heads: 6,
+  group_size: 32,
+  num_group: 512,
+  encoder_dims: 384,
+  use_feature_prop: True,
+  use_token_features: False,
+  use_global_features: True
+}
+
+
+total_bs : 16
+fast_filter: False
+slow_filter: False
+max_num_batches: 32
+max_epoch : 400
+grad_norm_clip : 10

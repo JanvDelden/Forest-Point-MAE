@@ -1,0 +1,19 @@
+# list of folders with plots to be included into dataset
+plot_folders: ["data/trees/weiser_trees/npy"]
+test_folders: ["data/trees/weiser_trees/npy"]
+
+
+
+seed: 0
+
+
+vis: True
+
+# normalization parameters
+in_memory: False
+normalization: True
+normalization_pars: [10, 10, 22.5]
+validate_samples: False
+
+
+NAME: Treeset

@@ -1,0 +1,14 @@
+# list of folders with plots to be included into dataset
+plot_folders: [data/chunks/A1N.npy, data/chunks/A1W.npy, data/chunks/G1N.npy, data/chunks/G1W.npy, data/chunks/G2N.npy, data/chunks/G2W.npy, data/chunks/G3N.npy, 
+              data/chunks/G3W.npy,data/chunks/forest_labeled_cleanest2.npy, data/chunks/G4N.npy, data/chunks/G4W.npy, data/chunks/L1N.npy, data/chunks/L2N.npy, 
+              data/chunks/LG1.npy, data/chunks/LG2.npy, data/chunks/LG3.npy, data/chunks/O1W.npy, data/chunks/L1W.npy, data/chunks/L2W.npy]
+test_folders: [data/chunks/O1N.npy]
+
+validate_samples: False
+
+# normalization parameters
+in_memory: False
+normalization: True
+normalization_pars: [10, 10, 22.5]
+
+NAME: Treeset

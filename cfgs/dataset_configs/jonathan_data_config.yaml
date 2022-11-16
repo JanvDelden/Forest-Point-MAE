@@ -1,0 +1,12 @@
+# list of folders with plots to be included into dataset
+plot_folders: [/user/jhenric/tree_learning/data/train]
+test_folders: ["/user/jschnei2/backup/data/jonathan"]
+
+validate_samples: False
+
+# normalization parameters
+in_memory: False
+normalization: True
+normalization_pars: [15, 15, 25]
+
+NAME: Treeset

@@ -1,0 +1,13 @@
+# list of folders with plots to be included into dataset
+plot_folders: [/user/jhenric/tree_learning/data/train]
+test_folders: ["/user/jschnei2/backup/data/jonathan"]
+# choose what data to provide
+target_type: "offset"
+seed: 0
+
+# normalization parameters
+normalization: True
+normalization_pars: [15, 15, 25]
+validate_samples: False
+
+NAME: Transfer_Treeset

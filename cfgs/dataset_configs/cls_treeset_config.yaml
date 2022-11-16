@@ -1,0 +1,22 @@
+# list of folders with plots to be included into dataset
+plot_folders: ["data/trees/seidel-trees2"]
+
+# choose what data to provide
+target_type: "label"
+seed: 0
+train_ratio: 0.75
+
+
+# normalization parameters
+normalization: True
+normalization_pars: [10, 10, 22.5]
+validate_samples: True
+
+# data augmentations
+transformations: []
+
+NAME: Cls_Treeset
+
+# only used if specified in main config file
+few_shot_train_path: "data/few_shot/train_idx.npy"
+few_shot_eval_path: "data/few_shot/eval_idx.npy"

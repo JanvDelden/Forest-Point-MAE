@@ -1,0 +1,192 @@
+# pretrain model on chunks
+
+CUDA_VISIBLE_DEVICES=6 python main.py --config cfgs/treeset.yaml --exp_name chunkmodel --start_ckpts experiments/pretrain_official/pretrain.pth
+CUDA_VISIBLE_DEVICES=6 python main.py --config cfgs/treeset.yaml --exp_name voxel03chunk --start_ckpts experiments/pretrain_official/pretrain.pth # with new voxelized data
+CUDA_VISIBLE_DEVICES=4 python main.py --config cfgs/treeset.yaml --exp_name fps --start_ckpts experiments/pretrain_official/pretrain.pth --fps 
+# with fps and initial point numbers 64k
+
+# create plots
+CUDA_VISIBLE_DEVICES=7 python main_vis.py --test --config cfgs/treeset.yaml --ckpts experiments/treeset/cfgs/chunkmodel/ckpt-last.pth
+
+#### predict tree species ###
+
+# scratch model
+CUDA_VISIBLE_DEVICES=4 python main.py --scratch_model  --config cfgs/cls_treeset.yaml --exp_name scratch
+Results = acc = 90.5325
+# pretrained model
+CUDA_VISIBLE_DEVICES=6 python main.py --finetune_model  --config cfgs/cls_treeset.yaml --ckpts experiments/treeset/cfgs/chunkmodel/ckpt-last.pth --exp_name classify
+Results: acc =  95.2663 # standard parameters
+Results: acc = 96.4497 # 600 epochs and 20 initial epochs
+#shapenet model
+CUDA_VISIBLE_DEVICES=4 python main.py --finetune_model  --config cfgs/cls_treeset.yaml --ckpts experiments/pretrain_official/pretrain.pth --exp_name verify_classify
+results: acc = 94.6746 # standard parameters
+Results: acc = 97.0414 # for 600 epochs and 20 initial epochs # value could also be random chance<
+# betas and epoch are adjusted for experiments in builder and cls_treeset right now
+
+# predict biomass
+CUDA_VISIBLE_DEVICES=6 python main.py --finetune_model --regression --config cfgs/biomass_treeset.yaml --ckpts experiments/treeset/cfgs/chunkmodel/ckpt-last.pth
+with simple model loss = 0.4978 but one observation dominates this with this observation excluded 0.1714 
+CUDA_VISIBLE_DEVICES=4 python main.py --scratch_model --regression --config cfgs/biomass_treeset.yaml --exp_name scratch
+CUDA_VISIBLE_DEVICES=6 python main.py --finetune_model --regression --config cfgs/biomass_treeset.yaml --ckpts experiments/pretrain_official/pretrain.pth
+
+# Loss values on l1 smooth loss
+scratch with scale  = 0.3065
+pretrained with scale = 0.2458
+shapenet with scale = 0.2885
+
+scratch with scale  = 0.2229
+pretrained without scale = 0.1981
+shapenet without scale = 0.2209
+
+pretrained without scale but with translate = 0.1756
+
+
+check out classification accuracy with new pretrained models
+CUDA_VISIBLE_DEVICES=6 python main.py --finetune_model  --config cfgs/cls_treeset.yaml --ckpts experiments/treeset/cfgs/fps/ckpt-last.pth --exp_name fps --fps
+96.4497 # second fastest, a bit less overfitting
+CUDA_VISIBLE_DEVICES=4 python main.py --finetune_model  --config cfgs/cls_treeset.yaml --ckpts experiments/treeset/cfgs/voxel03chunk/ckpt-last.pth --exp_name voxel
+96.4497 # much overfitting fastest
+scratch model
+96.4497 # much slower trainning but also seemingly slower overfitting
+
+# five shot 
+CUDA_VISIBLE_DEVICES=7 python main.py --finetune_model  --config cfgs/cls_treeset_fewshot.yaml --fps --ckpts experiments/treeset/cfgs/fps/ckpt-last.pth --exp_name fps --fps
+5 90.0000
+4 87.5000
+scratch model
+5 82.5000
+4 77.5000
+
+
+# visual evaluation:
+CUDA_VISIBLE_DEVICES=7 python main_vis.py --test --config cfgs/treeset.yaml --ckpts experiments/treeset/cfgs/fps/ckpt-last.pth --fps
+# no good result for fps model
+CUDA_VISIBLE_DEVICES=7 python main_vis.py --test --config cfgs/treeset.yaml --ckpts experiments/treeset/cfgs/voxel03chunk/ckpt-last.pth
+
+# try biomass with new data
+CUDA_VISIBLE_DEVICES=6 python main.py --finetune_model --regression --config cfgs/biomass_treeset.yaml --ckpts experiments/treeset/cfgs/fps/ckpt-last.pth --exp_name fps --fps
+0.2077
+CUDA_VISIBLE_DEVICES=4 python main.py --finetune_model --regression --config cfgs/biomass_treeset.yaml --ckpts experiments/treeset/cfgs/voxel03chunk/ckpt-last.pth --exp_name voxel
+0.2309
+
+
+# Note that up to this point the results from the fps model are based on a wrongly trained model
+
+
+# train model with tiny dim of trans and encoder 36, bs 32 and mask ratio 0.6
+CUDA_VISIBLE_DEVICES=7 python main.py --config cfgs/treeset.yaml --exp_name tiny32 
+CUDA_VISIBLE_DEVICES=4 python main.py --config cfgs/treeset.yaml --exp_name default
+CUDA_VISIBLE_DEVICES=6 python main.py --config cfgs/treeset.yaml --exp_name randompretraining --sampling_method random --start_ckpts experiments/pretrain_official/pretrain.pth
+loss = 4.8216 # needs more data/training
+CUDA_VISIBLE_DEVICES=4 python main.py --config cfgs/treeset.yaml --exp_name fpspretraining --sampling_method fps --start_ckpts experiments/pretrain_official/pretrain.pth
+loss = 2.3973
+
+
+CUDA_VISIBLE_DEVICES=7 python main.py --config cfgs/exp_cfgs/tiny36.yaml --exp_name tiny --sampling_method random
+tiny loss '11.3228
+
+largenoinit loss 2.9204
+
+
+CUDA_VISIBLE_DEVICES=4 python main.py --config cfgs/exp_cfgs/generator_set.yaml --exp_name test --sampling_method random --num_workers 1 --start_ckpts experiments/pretrain_official/pretrain.pth
+4.8313 with 1000 samples
+
+
+radom pretraining with shapenet init 20k samples
+4.4241 
+
+CUDA_VISIBLE_DEVICES=4 python main.py --config cfgs/treeset.yaml --exp_name no_pretraining --sampling_method random
+4.7867 might need more training on low learning rate
+
+# todo masking strategy is shit. too much overlap makes it too easy 
+select masking_ratio * N points, mask all tokens that contain these points.
+
+Train model with higher point numbers: 32000 for voxelsize 10, or 64000 for voxelsize03
+adjust group size/ and or token number to fit and also batch size?
+=> higher group size means a more narrow pipeline with trans dim 384
+=> for fps sampling the task is to easy in the crown because of much overlap
+
+
+
+=> 128*512 = 32768
+=> 128*1024 = 65536
+
+
+CUDA_VISIBLE_DEVICES=4 python main.py --config cfgs/exp_cfgs/65kpoints.yaml --exp_name debug --sampling_method random 6.0060 16 epochs, learning rate seems to high, 1470.527 epoch time
+CUDA_VISIBLE_DEVICES=6 python main.py --config cfgs/exp_cfgs/32kpoints.yaml --exp_name debug --sampling_method random  6.7117 25 epocs, learning rate seems too high 785.717 epoch time
+
+
+CUDA_VISIBLE_DEVICES=7 python main.py --config cfgs/exp_cfgs/masking_strategy.yaml --exp_name debug --sampling_method random
+CUDA_VISIBLE_DEVICES=7 python main.py --config cfgs/treeset.yaml --exp_name pointsmasking --sampling_method random
+CUDA_VISIBLE_DEVICES=6 python main.py --config cfgs/exp_cfgs/65kpoints.yaml --exp_name pointsmasking --sampling_method random
+
+
+CUDA_VISIBLE_DEVICES=4 python main_vis.py --config cfgs/exp_cfgs/masking_strategy.yaml --test --sampling_method random --ckpts experiments/masking_strategy/exp_cfgs/smalldataset/ckpt-last.pth
+CUDA_VISIBLE_DEVICES=4 python main_vis.py --config cfgs/exp_cfgs/65kpoints.yaml --test --sampling_method random --ckpts experiments/65kpoints/exp_cfgs/pointsmasking/ckpt-last.pth
+CUDA_VISIBLE_DEVICES=4 python main_vis.py --config cfgs/treeset.yaml --test --sampling_method random --ckpts experiments/treeset/cfgs/pointsmasking/ckpt-last.pth
+
+
+CUDA_VISIBLE_DEVICES=4 python main.py --finetune_model --regression --config cfgs/biomass_treeset.yaml --ckpts experiments/treeset/cfgs/pointsmasking/ckpt-last.pth --exp_name fps --fps
+CUDA_VISIBLE_DEVICES=4 python main.py --finetune_model  --config cfgs/cls_treeset_fewshot.yaml --fps --ckpts experiments/treeset/cfgs/pointsmasking/ckpt-last.pth --exp_name fps --fps
+
+
+CUDA_VISIBLE_DEVICES=4 python main.py --config cfgs/smallset.yaml --exp_name debug --start_ckpts experiments/pretrain_official/pretrain.pth
+CUDA_VISIBLE_DEVICES=4 python main_vis.py --config cfgs/smallset.yaml --test --ckpts experiments/smallset/cfgs/debug/ckpt-last.pth
+
+
+CUDA_VISIBLE_DEVICES=4 python main.py --config cfgs/exp_cfgs/32kpoints.yaml --exp_name tuesday --start_ckpts experiments/pretrain_official/pretrain.pth
+
+
+# Train models with 32 k points , rand masking and 0.6 masking ratio and step lr
+CUDA_VISIBLE_DEVICES=7 python main_vis.py --config cfgs/exp_cfgs/32kpoints.yaml --test --ckpts 
+CUDA_VISIBLE_DEVICES=4 python main.py --config cfgs/exp_cfgs/32kpoints.yaml --exp_name steptuesday --resume
+# acceptable reconstruction but not great
+
+# Train models with 32 k points , points masking and 0.4 masking ratio and step lr
+CUDA_VISIBLE_DEVICES=6 python main.py --config cfgs/exp_cfgs/32kpoints.yaml --exp_name pointsmasking04 --start_ckpts experiments/32kpoints/exp_cfgs/tuesday2/ckpt-last.pth
+
+# Train models with 16k points , points masking and 0.5 masking ratio and step lr
+CUDA_VISIBLE_DEVICES=7 python main.py --config cfgs/exp_cfgs/16kpoints.yaml --exp_name pointsmasking04 
+not working at all maybe the learning rate is wrong or the scheduler
+CUDA_VISIBLE_DEVICES=7 python main_vis.py --config cfgs/exp_cfgs/32kpoints.yaml --test --ckpts experiments/32kpoints/exp_cfgs/steptuesday/ckpt-last.pth
+CUDA_VISIBLE_DEVICES=7 python main.py --finetune_model  --config cfgs/cls_treeset_fewshot.yaml --ckpts experiments/32kpoints/exp_cfgs/steptuesday/ckpt-last.pth
+
+CUDA_VISIBLE_DEVICES=4 python main.py --config cfgs/treeset.yaml --exp_name slice_fps --start_ckpts experiments/pretrain_official/pretrain.pth --sampling_method slice_fps
+
+
+
+CUDA_VISIBLE_DEVICES=4 python main.py --config cfgs/treeset.yaml --exp_name fps --start_ckpts experiments/pretrain_official/pretrain.pth --sampling_method fps
+CUDA_VISIBLE_DEVICES=7 python main_vis.py --test --config cfgs/treeset.yaml --ckpts experiments/treeset/cfgs/slice_fps/ckpt-last.pth --sampling_method slice_fps
+CUDA_VISIBLE_DEVICES=5 python main.py --finetune_model  --config cfgs/cls_treeset_fewshot.yaml --ckpts experiments/treeset/cfgs/slice/ckpt-last.pth --exp_name slice --fewshot --sampling_method slice_fps --freeze_encoder
+CUDA_VISIBLE_DEVICES=7 python main.py --finetune_model  --config cfgs/cls_treeset_fewshot.yaml --scratch_model --exp_name scratch --fewshot --sampling_method slice_fps
+
+
+
+CUDA_VISIBLE_DEVICES=7 python main.py --finetune_model  --config cfgs/cls_treeset_fewshot.yaml --ckpts experiments/pretrain_official/pretrain.pth --exp_name pretrain_official --fewshot --sampling_method slice_fps
+
+tmux:
+CUDA_VISIBLE_DEVICES=4 python main.py --config cfgs/treeset.yaml --exp_name slice --start_ckpts experiments/pretrain_official/pretrain.pth --sampling_method slice_fps
+CUDA_VISIBLE_DEVICES=7 python main.py --config cfgs/treeset.yaml --exp_name scratchtrain --sampling_method slice_fps
+
+
+five shot finetuning
+freeze_encoder first run max value == 80 % epoch 111
+freeze encoder with plateua also 80 5 epoch 147
+
+
+CUDA_VISIBLE_DEVICES=7 python main_vis.py --test --config cfgs/treeset.yaml --ckpts experiments/treeset/cfgs/scratchtrain/ckpt-last.pth --sampling_method slice_fps
+
+CUDA_VISIBLE_DEVICES=7 python main.py --config cfgs/treeset.yaml --exp_name debug --sampling_method slice_fps
+CUDA_VISIBLE_DEVICES=7 python main.py --config cfgs/pretrain.yaml --exp_name 64knn
+
+
+main_vis scratch_train
+81.25
+80.0
+81.25
+90.0
+85.0
+
+CUDA_VISIBLE_DEVICES=5 python main.py --finetune_model  --config cfgs/cls_treeset_fewshot.yaml \
+        --ckpts experiments/treeset/cfgs/scratchtrain/ckpt-best.pth --exp_name freezescratchtrain \
+        --fewshot --sampling_method slice_fps --freeze_encoder

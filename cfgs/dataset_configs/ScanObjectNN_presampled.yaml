@@ -1,0 +1,5 @@
+NAME: ScanObjectNN_presampled
+ROOT: data/scanobjectnn/h5_files/main_split
+train_file: training_objectdataset_augmentedrot_scale75.h5
+test_file: test_objectdataset_augmentedrot_scale75.h5
+#POINTAUGMENTtraining_objectdataset_augmentedrot_scale75.h5

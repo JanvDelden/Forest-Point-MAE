@@ -1,0 +1,47 @@
+optimizer : {
+  type: AdamW,
+  kwargs: {
+  lr : 0.001,
+  weight_decay : 0.05
+}}
+
+scheduler: {
+  type: CosLR,
+  initial_epochs_ratio: 0.033,
+  kwargs: {epochs: will_be_calculated}
+}
+
+dataset : {
+  train : { _base_: cfgs/dataset_configs/ShapeNet-55.yaml, 
+            _base2_: cfgs/dataset_configs/ScanObjectNN_hardest.yaml,
+            _base3_: cfgs/dataset_configs/ModelNet40.yaml,
+            others: {subset: 'train', npoints: 1024, whole: True}},
+  val : {   _base_: cfgs/dataset_configs/ShapeNet-55.yaml, 
+            #_base_: cfgs/dataset_configs/ScanObjectNN_presampled.yaml,
+            others: {subset: 'test', npoints: 1024}},
+  test : { _base_: cfgs/dataset_configs/ShapeNet-55.yaml, 
+            #_base_: cfgs/dataset_configs/ScanObjectNN_presampled.yaml,
+            others: {subset: 'test', npoints: 1024}}}
+
+model : {
+  NAME: Point_MAE,
+  group_size: 32,
+  num_group: 64,
+  loss: cdl2,
+  transformer_config: {
+    mask_ratio: 0.7,
+    mask_type: 'rand',
+    trans_dim: 384,
+    encoder_dims: 384,
+    depth: 12,
+    drop_path_rate: 0.1,
+    num_heads: 6,
+    decoder_depth: 4,
+    decoder_num_heads: 6,
+  },
+}
+# encoder dims must be divisible by num heads bc of reshape operation in l 119 pointmae
+
+total_bs : 256
+max_step : 150000 # 73500 standard  150000 best result
+grad_norm_clip : 10

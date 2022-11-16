@@ -1,0 +1,4 @@
+NAME: ShapeNet
+DATA_PATH: data/ShapeNet55/split
+N_POINTS: 1024
+PC_PATH: data/ShapeNet55/shapenet_pc
